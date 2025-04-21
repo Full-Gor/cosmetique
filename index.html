@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cosmetics E-commerce Site</title>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    @keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.absolute.top-0.w-full.h-full.bg-center.bg-cover {
+  background-image: url('cosmetique.png');
+  filter: brightness(0.9) saturate(0.9) contrast(0.95); /* Valeurs réduites pour moins de luminosité et de couleur */
+}
+
+#blackOverlay {
+  opacity: 0.4; /* Augmentation de l'opacité pour assombrir légèrement */
+  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.4)) !important;
+}
+
+/* Changement de la couleur du texte en noir */
+.relative .text-white {
+  color: black !important;
+}
+
+.relative .text-white.opacity-90 {
+  color: black !important;
+  opacity: 1 !important;
+}
+
+/* Assurer que le texte est bien visible */
+.relative h1, 
+.relative p {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6); /* Ombre légèrement réduite */
+  font-weight: bold;
+}
+
+.Hero a.bg-rose-500 {
+  background-color: #f43f5e;
+  color: white;
+}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // Types
+    // Product and CartItem interfaces are used throughout the app
+    
+    // Context
+    const CartContext = React.createContext();
+
+    const CartProvider = ({ children }) => {
+      const [cartItems, setCartItems] = React.useState([]);
+
+      const addToCart = (product) => {
+        setCartItems(prevItems => {
+          const existingItem = prevItems.find(item => item.id === product.id);
+          
+          if (existingItem) {
+            return prevItems.map(item => 
+              item.id === product.id 
+                ? { ...item, quantity: item.quantity + 1 } 
+                : item
+            );
+          }
+          
+          return [...prevItems, { ...product, quantity: 1 }];
+        });
+      };
+
+      const removeFromCart = (productId) => {
+        setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+      };
+
+      const increaseQuantity = (productId) => {
+        setCartItems(prevItems => 
+          prevItems.map(item => 
+            item.id === productId 
+              ? { ...item, quantity: item.quantity + 1 } 
+              : item
+          )
+        );
+      };
+
+      const decreaseQuantity = (productId) => {
+        setCartItems(prevItems => {
+          const item = prevItems.find(item => item.id === productId);
+          
+          if (item && item.quantity === 1) {
+            return prevItems.filter(item => item.id !== productId);
+          }
+          
+          return prevItems.map(item => 
+            item.id === productId 
+              ? { ...item, quantity: item.quantity - 1 } 
+              : item
+          );
+        });
+      };
+
+      const clearCart = () => {
+        setCartItems([]);
+      };
+
+      return (
+        <CartContext.Provider 
+          value={{ 
+            cartItems, 
+            addToCart, 
+            removeFromCart, 
+            increaseQuantity, 
+            decreaseQuantity, 
+            clearCart 
+          }}
+        >
+          {children}
+        </CartContext.Provider>
+      );
+    };
+
+    const useCart = () => {
+      const context = React.useContext(CartContext);
+      if (context === undefined) {
+        throw new Error('useCart must be used within a CartProvider');
+      }
+      return context;
+    };
+
+    // Product data
+    const skincare = [
+      {
+        id: 'skin-1',
+        name: 'Hydrating Facial Cleanser',
+        description: 'A gentle cleanser that removes impurities while maintaining skin\'s natural moisture balance',
+        price: 24.99,
+        imageUrl: 'https://images.pexels.com/photos/8128069/pexels-photo-8128069.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'skincare',
+        isNew: true
+      },
+      {
+        id: 'skin-2',
+        name: 'Vitamin C Brightening Serum',
+        description: 'Potent antioxidant serum that brightens skin tone and reduces dark spots',
+        price: 39.99,
+        imageUrl: 'https://images.pexels.com/photos/5797999/pexels-photo-5797999.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'skincare',
+        isNew: false
+      },
+      {
+        id: 'skin-3',
+        name: 'Hyaluronic Acid Moisturizer',
+        description: 'Deeply hydrating moisturizer with hyaluronic acid to plump and refresh skin',
+        price: 29.99,
+        imageUrl: 'https://images.pexels.com/photos/7290270/pexels-photo-7290270.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'skincare',
+        isNew: false
+      },
+      {
+        id: 'skin-4',
+        name: 'Overnight Repair Mask',
+        description: 'Intensive treatment mask that works overnight to repair and rejuvenate tired skin',
+        price: 34.99,
+        imageUrl: 'https://images.pexels.com/photos/7290695/pexels-photo-7290695.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'skincare',
+        isNew: true
+      }
+    ];
+
+    const makeup = [
+      {
+        id: 'makeup-1',
+        name: 'Flawless Finish Foundation',
+        description: 'Lightweight, buildable coverage that looks and feels like your skin but better',
+        price: 32.99,
+        imageUrl: 'https://images.pexels.com/photos/2253832/pexels-photo-2253832.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'makeup',
+        isNew: false
+      },
+      {
+        id: 'makeup-2',
+        name: 'Volumizing Mascara',
+        description: 'Adds dramatic volume and length to lashes without clumping',
+        price: 19.99,
+        imageUrl: 'https://images.pexels.com/photos/3785147/pexels-photo-3785147.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'makeup',
+        isNew: true
+      },
+      {
+        id: 'makeup-3',
+        name: 'Matte Lipstick Collection',
+        description: 'Long-lasting, highly pigmented lipstick with a comfortable matte finish',
+        price: 22.99,
+        imageUrl: 'https://images.pexels.com/photos/2533266/pexels-photo-2533266.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'makeup',
+        isNew: false
+      },
+      {
+        id: 'makeup-4',
+        name: 'Eyeshadow Palette',
+        description: 'Versatile palette with 12 highly-pigmented shades from mattes to shimmers',
+        price: 42.99,
+        imageUrl: 'https://images.pexels.com/photos/2113855/pexels-photo-2113855.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'makeup',
+        isNew: false
+      }
+    ];
+
+    const haircare = [
+      {
+        id: 'hair-1',
+        name: 'Repairing Shampoo',
+        description: 'Nourishing formula that repairs damaged hair and prevents split ends',
+        price: 27.99,
+        imageUrl: 'https://images.pexels.com/photos/5069433/pexels-photo-5069433.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'haircare',
+        isNew: false
+      },
+      {
+        id: 'hair-2',
+        name: 'Hydrating Conditioner',
+        description: 'Rich, creamy conditioner that detangles and adds shine',
+        price: 27.99,
+        imageUrl: 'https://images.pexels.com/photos/5069436/pexels-photo-5069436.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'haircare',
+        isNew: false
+      },
+      {
+        id: 'hair-3',
+        name: 'Argan Oil Hair Serum',
+        description: 'Lightweight serum that tames frizz and adds brilliant shine',
+        price: 34.99,
+        imageUrl: 'https://images.pexels.com/photos/6724353/pexels-photo-6724353.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'haircare',
+        isNew: true
+      },
+      {
+        id: 'hair-4',
+        name: 'Heat Protection Spray',
+        description: 'Shields hair from heat damage up to 450°F while adding softness',
+        price: 18.99,
+        imageUrl: 'https://images.pexels.com/photos/2642842/pexels-photo-2642842.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'haircare',
+        isNew: false
+      }
+    ];
+
+    const fragrance = [
+      {
+        id: 'frag-1',
+        name: 'Rose & Sandalwood Perfume',
+        description: 'Elegant floral fragrance with warm woody undertones',
+        price: 79.99,
+        imageUrl: 'https://images.pexels.com/photos/965990/pexels-photo-965990.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'fragrance',
+        isNew: true
+      },
+      {
+        id: 'frag-2',
+        name: 'Citrus & Sea Salt Cologne',
+        description: 'Fresh, invigorating scent inspired by ocean breezes',
+        price: 69.99,
+        imageUrl: 'https://images.pexels.com/photos/4110331/pexels-photo-4110331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'fragrance',
+        isNew: false
+      },
+      {
+        id: 'frag-3',
+        name: 'Vanilla & Amber Body Mist',
+        description: 'Warm, comforting scent that lingers throughout the day',
+        price: 34.99,
+        imageUrl: 'https://images.pexels.com/photos/3059609/pexels-photo-3059609.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'fragrance',
+        isNew: false
+      },
+      {
+        id: 'frag-4',
+        name: 'Jasmine & Bergamot Eau de Parfum',
+        description: 'Sophisticated blend of floral and citrus notes',
+        price: 89.99,
+        imageUrl: 'https://images.pexels.com/photos/4366166/pexels-photo-4366166.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+        category: 'fragrance',
+        isNew: true
+      }
+    ];
+
+    // Components
+    const ProductCard = ({ product }) => {
+      const { addToCart, cartItems, increaseQuantity, decreaseQuantity } = useCart();
+      const [isHovered, setIsHovered] = React.useState(false);
+      const cartItem = cartItems.find(item => item.id === product.id);
+
+      return (
+        <div 
+          className="rounded-lg overflow-hidden bg-white shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div className="relative h-56 overflow-hidden">
+            <img 
+              src={product.imageUrl} 
+              alt={product.name}
+              className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? 'scale-110' : 'scale-100'}`}
+            />
+            <div className="absolute top-2 right-2">
+              {product.isNew && (
+                <span className="bg-rose-500 text-white text-xs px-2 py-1 rounded-full">New</span>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <h3 className="text-lg font-medium line-clamp-1">{product.name}</h3>
+            <p className="text-gray-500 text-sm mb-2 line-clamp-2">{product.description}</p>
+            <div className="flex justify-between items-center mt-3">
+              <span className="text-xl font-bold text-rose-600">${product.price.toFixed(2)}</span>
+              
+              {!cartItem ? (
+                <button 
+                  onClick={() => addToCart(product)} 
+                  className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-md flex items-center transition-colors"
+                  aria-label={`Add ${product.name} to cart`}
+                >
+                  <lucide-icon name="shopping-bag" class="mr-1"></lucide-icon> Add
+                </button>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => decreaseQuantity(product.id)}
+                    className="bg-gray-200 hover:bg-gray-300 p-2 rounded-full transition-colors"
+                    aria-label="Decrease quantity"
+                  >
+                    <lucide-icon name="minus" size="14"></lucide-icon>
+                  </button>
+                  
+                  <span className="font-medium w-6 text-center">{cartItem.quantity}</span>
+                  
+                  <button 
+                    onClick={() => increaseQuantity(product.id)}
+                    className="bg-gray-200 hover:bg-gray-300 p-2 rounded-full transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    <lucide-icon name="plus" size="14"></lucide-icon>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const CategorySection = ({ id, title, description, products, bgColor }) => {
+      return (
+        <section id={id} className={`py-14 my-8 rounded-lg ${bgColor}`}>
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl font-bold mb-3">{title}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">{description}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      );
+    };
+
+    const Cart = ({ isOpen, onClose }) => {
+      const { cartItems, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = useCart();
+      const [showForm, setShowForm] = React.useState(false);
+      const [formData, setFormData] = React.useState({
+        email: '',
+        phone: '',
+      });
+      const [orderSuccess, setOrderSuccess] = React.useState(false);
+      
+      const total = cartItems.reduce(
+        (sum, item) => sum + item.price * item.quantity, 
+        0
+      );
+
+      React.useEffect(() => {
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') onClose();
+        };
+        
+        window.addEventListener('keydown', handleEsc);
+        
+        if (isOpen) {
+          document.body.style.overflow = 'hidden';
+        }
+        
+        return () => {
+          window.removeEventListener('keydown', handleEsc);
+          document.body.style.overflow = 'auto';
+        };
+      }, [isOpen, onClose]);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        console.log('Order submitted:', { items: cartItems, ...formData });
+        
+        setOrderSuccess(true);
+        
+        setTimeout(() => {
+          setOrderSuccess(false);
+          setShowForm(false);
+          setFormData({ email: '', phone: '' });
+          clearCart();
+          onClose();
+        }, 2000);
+      };
+
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
+
+      return (
+        <>
+          <div 
+            className={`fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity ${
+              isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+            onClick={onClose}
+          ></div>
+          
+          <div 
+            className={`fixed top-0 right-0 w-full md:w-96 h-full bg-white z-50 shadow-xl transform transition-transform ${
+              isOpen ? 'translate-x-0' : 'translate-x-full'
+            } overflow-y-auto`}
+          >
+            <div className="p-5 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold flex items-center">
+                  <lucide-icon name="shopping-bag" class="mr-2"></lucide-icon> Your Shopping Cart
+                </h2>
+                <button 
+                  onClick={onClose} 
+                  className="p-2 rounded-full hover:bg-gray-100"
+                  aria-label="Close cart"
+                >
+                  <lucide-icon name="x"></lucide-icon>
+                </button>
+              </div>
+            </div>
+            
+            {cartItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 p-4">
+                <lucide-icon name="shopping-bag" size="48" class="text-gray-300 mb-4"></lucide-icon>
+                <p className="text-gray-500 text-center">Your cart is empty</p>
+                <button 
+                  onClick={onClose}
+                  className="mt-4 bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-md transition-colors"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="divide-y overflow-y-auto max-h-[calc(100vh-225px)]">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="p-4 flex items-start">
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.name} 
+                        className="w-20 h-20 object-cover rounded-md"
+                      />
+                      
+                      <div className="ml-4 flex-grow">
+                        <h3 className="font-medium">{item.name}</h3>
+                        <p className="text-gray-500 text-sm">${item.price.toFixed(2)}</p>
+                        
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="flex items-center border rounded-md">
+                            <button 
+                              onClick={() => decreaseQuantity(item.id)}
+                              className="p-1 hover:bg-gray-100 border-r"
+                              aria-label="Decrease quantity"
+                            >
+                              <lucide-icon name="minus" size="14"></lucide-icon>
+                            </button>
+                            <span className="px-3">{item.quantity}</span>
+                            <button 
+                              onClick={() => increaseQuantity(item.id)}
+                              className="p-1 hover:bg-gray-100 border-l"
+                              aria-label="Increase quantity"
+                            >
+                              <lucide-icon name="plus" size="14"></lucide-icon>
+                            </button>
+                          </div>
+                          
+                          <button 
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-rose-500 hover:text-rose-600 p-1"
+                            aria-label={`Remove ${item.name} from cart`}
+                          >
+                            <lucide-icon name="trash-2" size="18"></lucide-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t p-4 bg-gray-50">
+                  {!showForm ? (
+                    <>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium">Subtotal</span>
+                        <span className="font-bold">${total.toFixed(2)}</span>
+                      </div>
+                      <p className="text-gray-500 text-sm mb-4">Shipping & taxes calculated at checkout</p>
+                      
+                      <button 
+                        onClick={() => setShowForm(true)}
+                        className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-md font-medium transition-colors"
+                      >
+                        Passer commande
+                      </button>
+                      
+                      <button 
+                        onClick={onClose}
+                        className="w-full mt-2 border border-gray-300 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
+                      >
+                        Continue Shopping
+                      </button>
+                    </>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <h3 className="text-lg font-semibold mb-4">Vos informations</h3>
+                      
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          placeholder="votre@email.com"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                          Téléphone
+                        </label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          placeholder="Votre numéro de téléphone"
+                        />
+                      </div>
+                      
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium">Total</span>
+                        <span className="font-bold">${total.toFixed(2)}</span>
+                      </div>
+                      
+                      <button 
+                        type="submit"
+                        className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-md font-medium transition-colors"
+                      >
+                        Confirmer la commande
+                      </button>
+                      
+                      <button 
+                        type="button"
+                        onClick={() => setShowForm(false)}
+                        className="w-full border border-gray-300 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
+                      >
+                        Retour
+                      </button>
+                    </form>
+                  )}
+                  
+                  {orderSuccess && (
+                    <div className="fixed inset-0 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-lg shadow-xl">
+                        <div className="text-center">
+                          <div className="text-green-500 text-5xl mb-4">✓</div>
+                          <h3 className="text-xl font-semibold mb-2">Commande envoyée !</h3>
+                          <p className="text-gray-600">Nous vous contacterons bientôt.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      );
+    };
+
+    const Navbar = () => {
+      const [isScrolled, setIsScrolled] = React.useState(false);
+      const [isCartOpen, setIsCartOpen] = React.useState(false);
+      const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+      const { cartItems } = useCart();
+      
+      const totalQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+      React.useEffect(() => {
+        const handleScroll = () => {
+          if (window.scrollY > 10) {
+            setIsScrolled(true);
+          } else {
+            setIsScrolled(false);
+          }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      return (
+        <>
+          <nav 
+            className={`fixed w-full z-50 transition-all duration-300 ${
+              isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'
+            }`}
+          >
+            <div className="container mx-auto px-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <h1 className={`text-2xl font-semibold ${isScrolled ? 'text-rose-600' : 'text-rose-500'}`}>
+                    BeautyEssence
+                  </h1>
+                </div>
+                
+                <div className="hidden md:flex items-center space-x-8">
+                  <a href="#skincare" className="font-medium hover:text-rose-500 transition-colors">Skincare</a>
+                  <a href="#makeup" className="font-medium hover:text-rose-500 transition-colors">Makeup</a>
+                  <a href="#haircare" className="font-medium hover:text-rose-500 transition-colors">Hair Care</a>
+                  <a href="#fragrance" className="font-medium hover:text-rose-500 transition-colors">Fragrance</a>
+                </div>
+                
+                <button 
+                  className="relative p-2 rounded-full hover:bg-rose-100 transition-colors"
+                  onClick={() => setIsCartOpen(true)}
+                  aria-label="Shopping cart"
+                >
+                  <lucide-icon name="shopping-bag" class={isScrolled ? 'text-rose-600' : 'text-rose-500'}></lucide-icon>
+                  {totalQuantity > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                      {totalQuantity}
+                    </span>
+                  )}
+                </button>
+                
+                <button 
+                  className="md:hidden p-2"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                >
+                  {isMobileMenuOpen ? (
+                    <lucide-icon name="x" class={isScrolled ? 'text-rose-600' : 'text-rose-500'}></lucide-icon>
+                  ) : (
+                    <lucide-icon name="menu" class={isScrolled ? 'text-rose-600' : 'text-rose-500'}></lucide-icon>
+                  )}
+                </button>
+              </div>
+            </div>
+          </nav>
+          
+          {isMobileMenuOpen && (
+            <div className="fixed top-16 left-0 right-0 bg-white z-40 shadow-lg md:hidden">
+              <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
+                <a 
+                  href="#skincare" 
+                  className="font-medium p-2 hover:bg-rose-100 rounded transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Skincare
+                </a>
+                <a 
+                  href="#makeup" 
+                  className="font-medium p-2 hover:bg-rose-100 rounded transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Makeup
+                
+                </a>
+                <a 
+                  href="#haircare" 
+                  className="font-medium p-2 hover:bg-rose-100 rounded transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Hair Care
+                </a>
+                <a 
+                  href="#fragrance" 
+                  className="font-medium p-2 hover:bg-rose-100 rounded transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Fragrance
+                </a>
+              </div>
+            </div>
+          )}
+          
+          <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+        </>
+      );
+    };
+
+    const Hero = () => {
+  return (
+    <div className="relative pt-16 pb-32 flex content-center items-center justify-center min-h-[85vh]">
+      <div 
+        className="absolute top-0 w-full h-full bg-center bg-cover" 
+        style={{
+          backgroundImage: "url('cosmetique.png')"
+        }}
+      >
+        <span id="blackOverlay" className="w-full h-full absolute opacity-60 bg-black"></span>
+      </div>
+      
+      <div className="container relative mx-auto px-4">
+        <div className="flex flex-wrap justify-center">
+          <div className="w-full lg:w-7/12 px-4 ml-auto mr-auto text-center">
+            <div className="relative">
+              <h1 className="text-white font-semibold text-4xl md:text-5xl lg:text-6xl mb-4 animate-fade-in-up">
+                Discover Your Beauty Essence
+              </h1>
+              <p className="mt-4 text-lg text-white opacity-90 animate-fade-in-up animation-delay-200">
+                Explore our premium collection of cosmetics and skincare products designed to enhance your natural beauty
+              </p>
+              <div className="mt-8 animate-fade-in-up animation-delay-400">
+                <a 
+                  href="#skincare" 
+                  className="bg-rose-500 text-white text-lg font-medium px-8 py-3 rounded-full hover:bg-rose-600 transition-colors inline-block"
+                >
+                  Shop Now
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+    const Footer = () => {
+      return (
+        <footer className="bg-gray-900 text-white pt-12 pb-8">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div>
+                <h3 className="text-xl font-bold mb-4">BeautyEssence</h3>
+                <p className="text-gray-400 mb-4">
+                  Discover premium beauty products that enhance your natural beauty and nourish your skin.
+                </p>
+                <div className="flex space-x-4">
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <lucide-icon name="instagram"></lucide-icon>
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <lucide-icon name="facebook"></lucide-icon>
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <lucide-icon name="twitter"></lucide-icon>
+                  </a>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-medium mb-4">Categories</h4>
+                <ul className="space-y-2">
+                  <li><a href="#skincare" className="text-gray-400 hover:text-white transition-colors">Skincare</a></li>
+                  <li><a href="#makeup" className="text-gray-400 hover:text-white transition-colors">Makeup</a></li>
+                  <li><a href="#haircare" className="text-gray-400 hover:text-white transition-colors">Hair Care</a></li>
+                  <li><a href="#fragrance" className="text-gray-400 hover:text-white transition-colors">Fragrance</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-medium mb-4">Help</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Shipping</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Returns</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-medium mb-4">Newsletter</h4>
+                <p className="text-gray-400 mb-4">
+                  Subscribe to receive updates, access to exclusive deals, and more.
+                </p>
+                <form className="flex">
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    className="bg-gray-800 text-white px-4 py-2 rounded-l-md focus:outline-none focus:ring-1 focus:ring-rose-500 w-full"
+                  />
+                  <button 
+                    type="submit" 
+                    className="bg-rose-500 hover:bg-rose-600 px-4 py-2 rounded-r-md transition-colors"
+                  >
+                    Subscribe
+                  </button>
+                </form>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-800 mt-10 pt-6 text-center text-gray-400 text-sm">
+              <p>&copy; {new Date().getFullYear()} BeautyEssence. All rights reserved.</p>
+            </div>
+          </div>
+        </footer>
+      );
+    };
+
+    const App = () => {
+      return (
+        <CartProvider>
+          <div className="min-h-screen bg-rose-50/30">
+            <Navbar />
+            <Hero />
+            
+            <div className="container mx-auto px-4 py-8">
+              <CategorySection 
+                id="skincare"
+                title="Skincare" 
+                description="Nourish and revitalize your skin with our premium skincare collection" 
+                products={skincare} 
+                bgColor="bg-rose-100/50"
+              />
+              
+              <CategorySection 
+                id="makeup"
+                title="Makeup" 
+                description="Enhance your natural beauty with our luxurious makeup products" 
+                products={makeup} 
+                bgColor="bg-purple-100/50"
+              />
+              
+              <CategorySection 
+                id="haircare"
+                title="Hair Care" 
+                description="Transform your hair with our professional quality hair care products" 
+                products={haircare} 
+                bgColor="bg-blue-100/50"
+              />
+              
+              <CategorySection 
+                id="fragrance"
+                title="Fragrance" 
+                description="Discover captivating scents that leave a lasting impression" 
+                products={fragrance} 
+                bgColor="bg-amber-100/50"
+              />
+            </div>
+            
+            <Footer />
+          </div>
+        </CartProvider>
+      );
+    };
+
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  </script>
+</body>
+</html>
