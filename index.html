@@ -100,6 +100,7 @@
     .relative.p-2.rounded-full:hover {
       background-color: rgba(244, 63, 94, 0.1);
     }
+    
 
     .p-1:hover {
       background-color: rgba(229, 231, 235, 1);
@@ -137,6 +138,54 @@
       font-size: 0.875rem;
       font-weight: 500;
     }
+    /* Correction pour rendre les icônes visibles */
+
+/* Forcer les icônes à être noires dans la navbar */
+nav lucide-icon svg {
+  color: black !important;
+}
+
+/* S'assurer que les icônes dans les boutons plus/moins sont visibles */
+.flex.items-center.space-x-2 button lucide-icon svg,
+.flex.items-center.border.rounded-md button lucide-icon svg {
+  color: black !important;
+}
+
+/* Conserver la couleur blanche des icônes sur fond coloré */
+.bg-rose-500 lucide-icon svg,
+.bg-rose-600 lucide-icon svg,
+.text-white lucide-icon svg {
+  color: white !important;
+}
+
+/* Conserver la couleur rose des icônes de suppression dans le panier */
+.text-rose-500 lucide-icon svg,
+.text-rose-600 lucide-icon svg {
+  color: #f43f5e !important;
+}
+
+/* Correction pour le menu burger sur mobile */
+.md\:hidden lucide-icon svg {
+  color: black !important;
+}
+
+/* S'assurer que toutes les icônes lucide sont correctement affichées */
+lucide-icon {
+  display: inline-flex !important;
+}
+
+lucide-icon svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* S'assurer que les boutons sont toujours visibles et cliquables */
+button {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
   </style>
 </head>
 <body>
@@ -892,13 +941,16 @@ const Cart = ({ isOpen, onClose }) => {
   };
 
   return (
-    <>
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      ></div>
+  <>
+    <style>
+      {`
+        /* Fixes pour les icônes */
+        nav lucide-icon svg { color: black !important; }
+        .flex.items-center.space-x-2 button lucide-icon svg { color: black !important; }
+        .flex.items-center.border.rounded-md button lucide-icon svg { color: black !important; }
+      `}
+    </style>
+    {/* Reste du code... */}
 
       <div
         className={`fixed top-0 right-0 w-full md:w-96 h-full bg-white z-50 shadow-xl transform transition-transform ${
